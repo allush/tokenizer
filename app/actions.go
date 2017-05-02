@@ -15,8 +15,13 @@ func (app *Application) issueToken(
 
 	user, err := (&User{}).Auth(login, password)
 	if err != nil {
-		writer.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(writer, "Wrong user credentials: ", err)
+		if err == sql.ErrNoRows {
+			writer.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(writer, "Wrong user credentials")
+		} else {
+			writer.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(writer, err)
+		}
 		return
 	}
 
@@ -41,7 +46,7 @@ func (app *Application) getLoginByToken(
 	if err != nil {
 		if err == sql.ErrNoRows {
 			writer.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(writer, "Not Found: ", err)
+			fmt.Fprint(writer, "Not Found")
 		} else {
 			writer.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(writer, err)
